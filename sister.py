@@ -1,11 +1,26 @@
 #!/usr/bin/python3
 
+import glob
 import json
+import os
 
-def get_intel():
-    global intel
+def check_if_sudo():
+    if not 'SUDO_UID' in os.environ.keys():
+        print('[x] This script requires super-user privileges (sudo).')
+        exit()
 
-    json_filepath = './intel.json'
+def ingest_crowdstrike():
+    files = glob.glob('*_indicators_*.json')
+    updates = 0
+    for cs_file in files:
+        print('[+] Ingesting ' + cs_file)
+        if get_iocs(cs_file) > 0:
+            updates = updates + 1
+    if updates > 0:   
+        os.system('sudo so-zeek-restart')
+
+def get_iocs(cs_file):
+    json_filepath = './' + cs_file
     json_file = open(json_filepath,)
     json_data = json.load(json_file)
     json_file.close()
@@ -22,26 +37,29 @@ def get_intel():
         'file_name':'Intel::FILE_NAME'
      }
  
-    intel = []
+    dict_of_iocs = {}
     for line in json_data:
-        ioc_value = line['value']
+        ioc = line['value']
         ioc_type = label.get(line['type_name'], 'Intel::SOFTWARE')
         for actor in line['actors']:
             if 'slug' in actor:
-                slug = (actor['slug'])
-        phase = line['kill_chains'][0]
-        malware = line['malware_families'][0]
-        ioc_source = slug + '_' + phase + '_' + malware
-        ioc_entry = ioc_value, ioc_type, ioc_source, "T"
-        intel.append('\t'.join(ioc_entry))
+                ioc_source = 'crowdstrike_' + actor['slug']
+        attributes = ioc, ioc_type, ioc_source, "T"
+        dict_of_iocs[ioc] = '\t'.join(attributes)
+    return tell_bro(dict_of_iocs)
 
-def tell_bro():
+def tell_bro(dict_of_iocs):
     intel_path = '/opt/zeek/share/bro/intel/intel.dat'
     intel_file = open(intel_path, 'a')
-    for ioc in intel:
-        intel_file.write(ioc + '\n')
+    current_intel = open(intel_path).read()
+    updates = 0
+    for ioc in dict_of_iocs:
+        if ioc not in current_intel:
+            intel_file.write(dict_of_iocs[ioc] + '\n')
+            updates = updates + 1
+    print(" -  Added %d IOCs to Bro/Zeek." % updates)
     intel_file.close()
+    return updates
 
-get_intel()
-tell_bro()
-# restart_bro()
+check_if_sudo()
+ingest_crowdstrike()
