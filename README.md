@@ -5,13 +5,14 @@
 * **NOTE:** this script was designed for the [Security Onion](https://securityonion.net) Network Security Monitoring platform. 
 * Place the following within your current working directory:
   * `sister.py`
+  * `generate_traffic.py`
   * The latest threat intel from CrowdStrike in the form of a JSON file. 
     * ex: `59_indicators_2020-05-03T04_41_51Z.json`
-  * [OPTIONAL] `generate_traffic.py`
 * Execute `sudo ./sister.py`
-* [OPTIONAL] Execute `sudo ./generate_traffic.py`
+* Execute `sudo ./generate_traffic.py`
   * When prompted, make sure to specify an IOC `sister.py` added to `/opt/bro/share/zeek/intel/intel.dat`. 
-* [OPTIONAL] Execute `sudo tcpreplay -i eth1 traffic.pcap` and then, check your Bro logs. 
+* Execute `sudo tcpreplay -i eth1 traffic.pcap` and then, check your Bro logs. 
+  * **NOTE:** use the correct network interface card Bro is monitoring. 
 
 ## How to Download Threat Intel from Crowdstrike
 - Login to [CrowdStrike](https://falcon.crowdstrike.com/login/)
