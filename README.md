@@ -1,5 +1,10 @@
 # sister
-> Normalizes and appends threat intel from CrowdStrike to your local Zeek 'intel.dat' file.
+> Normalizes and appends threat intel from CrowdStrike to your local Zeek 'intel.dat'
+
+## Usage
+```
+sudo ./sister.py
+```
 
 ## How to download threat intel from CrowdStrike
 - Login to [CrowdStrike](https://falcon.crowdstrike.com/login/)
@@ -13,8 +18,3 @@
 - Rename the JSON file to `intel.json`
 - Deliver the JSON file to your air-gapped Bro/Zeek instance via sneaker-net
 - Place the JSON file in your current working directory
-
-## Usage
-```
-sudo ./sister.py
-```
