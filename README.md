@@ -2,6 +2,7 @@
 > Feeds Bro the latest threat intel from CrowdStrike.
 
 ## Usage
+* **NOTE:** this script was designed for the [Security Onion](https://securityonion.net) Network Security Monitoring platform. 
 * Place the following within your current working directory:
   * `sister.py`
   * The latest threat intel from CrowdStrike in the form of a JSON file. 
@@ -19,3 +20,9 @@
 - Click-on the download button when prompted
 - Save the JSON file to disc
 - Distribute the intel via sneaker-net
+
+## What is Bro?
+- [Learn More](https://zeek.org)
+
+## What is CrowdStrike?
+- [Learn More](https://www.crowdstrike.com/endpoint-security-products/falcon-x-threat-intelligence/)
