@@ -1,5 +1,5 @@
 # sister
-> Normalizes and appends threat intel from CrowdStrike to your local Zeek 'intel.dat'
+> Gives your local 'Bro' (Zeek) instance the latest threat intel from CrowdStrike. 
 
 ## Usage
 ```
