@@ -15,7 +15,7 @@
 - Filter for:
   - `last updated: past 30 days`
   - `confidence: high`
-  - `targets:government`
+  - `targets: government`
 - Click-on the export button (right-hand side) > JSON
 - Click-on the download button when prompted
 - Save the JSON file to disc
