@@ -14,7 +14,7 @@
 - Deliver the JSON file to your air-gapped Bro/Zeek instance via sneaker-net
 - Place the JSON file in your current working directory
 
-## How to user 'sister'
+## Usage
 ```
 sudo ./sister.py
 ```
