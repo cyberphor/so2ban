@@ -1,5 +1,5 @@
 # sister
-> Gives your local 'Bro' (Zeek) instance the latest threat intel from CrowdStrike. 
+> Gives Bro the latest threat intel from CrowdStrike.
 
 ## Usage
 ```
