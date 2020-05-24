@@ -1,20 +1,16 @@
 # sister
-> Feeds Bro the latest threat intel from CrowdStrike
+> Updates Bro with the latest threat intel from CrowdStrike.
 
 ## Usage
-* **NOTE:** this script was designed for the [Security Onion](https://securityonion.net) Network Security Monitoring platform 
-* Place the following within your current working directory:
+**NOTE:** this script was designed for the [Security Onion](https://securityonion.net) Network Security Monitoring platform. 
+* Copy the following to your current working directory:
   * `sister.py`
-  * `generate_traffic.py`
   * The latest threat intel from CrowdStrike in the form of a JSON file 
     * ex: `59_indicators_2020-05-03T04_41_51Z.json`
-* Execute `sudo ./sister.py`
-* Execute `sudo ./generate_traffic.py`
-  * When prompted, make sure to specify an IOC `sister.py` added to `/opt/bro/share/zeek/intel/intel.dat`
-* Execute `sudo tcpreplay -i eth1 traffic.pcap` and then, check your Bro logs
-  * **NOTE:** make sure to use the same network interface card Bro is configured to monitor
+* Execute `sudo ./sister.py --test-bro`
+* Check your Bro Intel logs
 
-## How to Download Threat Intel from Crowdstrike
+## How to Download Threat Intel From Crowdstrike
 - Login to [CrowdStrike](https://falcon.crowdstrike.com/login/)
 - Click-on the *Intelligence* tab (left-hand side) > *Indicators*
 - Filter for:
