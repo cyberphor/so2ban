@@ -38,7 +38,7 @@ def check_so_version():
     return current_intel, restart_bro
 
 def get_intel(current_intel,restart_bro):
-    directory = glob.glob('*_indicators_*.json')
+    directory = glob.glob('/tmp/*_indicators_*.json')
     updates = 0
     for new_intel in directory:
         print('[+] Ingesting ' + new_intel)
@@ -48,8 +48,7 @@ def get_intel(current_intel,restart_bro):
         os.system(restart_bro)
 
 def get_iocs(current_intel,new_intel):
-    json_filepath = './' + new_intel
-    json_file = open(json_filepath,)
+    json_file = open(new_intel,)
     json_data = json.load(json_file)
     json_file.close()
 
@@ -72,8 +71,8 @@ def get_iocs(current_intel,new_intel):
         for actor in line['actors']:
             if 'slug' in actor:
                 ioc_source = 'crowdstrike_' + actor['slug']
-        attributes = ioc, ioc_type, ioc_source, "T"
-        dict_of_iocs[ioc] = '\t'.join(attributes)
+                attributes = ioc, ioc_type, ioc_source, "T"
+                dict_of_iocs[ioc] = '\t'.join(attributes)
     return tell_bro(current_intel,dict_of_iocs)
 
 def tell_bro(current_intel,dict_of_iocs):
