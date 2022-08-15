@@ -21,13 +21,26 @@ def get_events(elastic_server_ip, elastic_server_port, elastic_api_key):
     }
     response = requests.get(url, headers = headers, verify = False)
     events = json.loads(response.text)["hits"]["hits"]
+    cases = []
+    related = []
     for event in events:
-        pprint(event["_source"])
-        if "so_case" in event["_source"]:
-            case = event["_source"]
-            timestamp = case["@timestamp"]
-            details = case["so_case"]
-            #pprint(details)
+        kind = event["_source"]["so_kind"]
+        if kind == "case":
+            cases.append(event)
+        elif kind == "related":
+            related.append(event)
+    for event in related:
+        update = event["_source"]["so_related"]
+        for case in cases:
+            if update["caseId"] == case["_id"]:
+                foo = {
+                    "id": case["_id"],
+                }
+                for detail in case["_source"]["so_case"]:
+                    foo[detail] = case["_source"]["so_case"][detail]
+                for field in update["fields"]:
+                    foo[field] = update["fields"][field]
+                pprint(foo)
     return
 
 def send_event(misp_server_ip, misp_api_key, event):
