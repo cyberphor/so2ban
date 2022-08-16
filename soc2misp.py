@@ -57,16 +57,19 @@ def get_cases(elastic_server_ip, elastic_server_port, elastic_api_key):
         "Content-Type": "application/json;charset=UTF-8",
         "Authorization": authorization
     }
-    response = requests.get(url, headers = headers, verify = False)
-    events = json.loads(response.text)["hits"]["hits"]
+    response_from_elastic = requests.get(url, headers = headers, verify = False)
+    events = json.loads(response_from_elastic.text)["hits"]["hits"]
     cases = []
     related = []
+    artifacts = []
     for event in events:
-        kind = event["_source"]["so_kind"]
-        if kind == "case":
+        event_type = event["_source"]["so_kind"]
+        if event_type == "case":
             cases.append(event)
-        elif kind == "related":
+        elif event_type == "related":
             related.append(event)
+        elif event_type == "artifact":
+            artifacts.append(event)
     for event in related:
         update = event["_source"]["so_related"]
         for case in cases:
@@ -78,11 +81,31 @@ def get_cases(elastic_server_ip, elastic_server_port, elastic_api_key):
                     foo[detail] = case["_source"]["so_case"][detail]
                 for field in update["fields"]:
                     foo[field] = update["fields"][field]
-                #pprint(foo)
-    return
+    return cases
 
-def add_event(misp_server_ip, misp_api_key, event):
+def create_event(case):
+    pprint(case)
     event = Event()
+    case["_id"]
+    case["so_case"]
+    # map case details to event
+    # for artifact in case:
+        # attribute = create_attribute(artifact)
+        # add attribute to event
+    return event
+
+def create_attribute(artifact):
+    pprint(artifact)
+    attribute = Attribute()
+    attribute._type = "" # artifact["type"], ex: url
+    attribute.category = "" # artifact["category"], ex: network activity
+    attribute.value = ""
+    attribute.distribution = ""
+    attribute.for_ids = "false"
+    attribute.comment = ""
+    return attribute
+
+def publish_event(misp_server_ip, misp_api_key, event):
     url = "https://" + misp_server_ip + "/events"
     headers = {
         "Accept": "application/json",
@@ -93,21 +116,14 @@ def add_event(misp_server_ip, misp_api_key, event):
     print(response.text)
     return
 
-def add_attribute():
-    return
-
 def main():
     requests.packages.urllib3.disable_warnings()
-    parser = argparse.ArgumentParser()
-    parser.add_argument("--get-cases", action="store_true", help = "Get events from Elasticsearch")
-    parser.add_argument("--add-event", action="store_true", help = "Send an event to MISP")
-    args = parser.parse_args()
-    if args.get_cases:
-        get_cases(elastic_server_ip, elastic_server_port, elastic_api_key)
-    elif args.add_event:
-        add_event(misp_server_ip, misp_api_key)
-    else:
-        parser.print_help()
+    cases = get_cases(elastic_server_ip, elastic_server_port, elastic_api_key)
+    for case in cases:
+        create_event(case)
+        # event = create_event(case)
+        # publish_event(event)
+    return
 
 if __name__ == "__main__":
     main()
