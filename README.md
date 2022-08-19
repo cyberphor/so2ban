@@ -1,5 +1,5 @@
-## soc2misp
-Adds Security Onion Cases to MISP.
+## soda
+Python scripts for augmenting Security Onion. 
 
 ## Copyright
 This project is licensed under the terms of the [MIT license](/LICENSE). 
