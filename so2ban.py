@@ -2,7 +2,10 @@
 
 from http.server import BaseHTTPRequestHandler, HTTPServer
 # from netmiko import ConnectHandler
+import argparse
 import ipaddress
+import shutil
+import subprocess
 
 ip = "127.0.0.1"
 port = 666
@@ -40,10 +43,36 @@ class RequestHandler(BaseHTTPRequestHandler):
         else:
             self.send_error(404)
 
-def main():
+def install_so2ban():
+    default_action_menu_filepath = "/opt/so/saltstack/default/salt/soc/files/soc/menu.actions.json"
+    local_action_menu_filepath = "/opt/so/saltstack/local/salt/soc/files/soc/menu.actions.json"
+    shutil.copyfile(default_action_menu_filepath, local_action_menu_filepath)
+    
+    new_action = "foo"
+    with open(local_action_menu_filepath) as local_action_menu_file:
+        local_action_menu = local_action_menu_file.readlines()
+        second_to_last_line = len(local_action_menu) - 1
+        local_action_menu.insert(second_to_last_line, new_action)
+        """
+        with open('new_file.txt', 'w') as new_file:
+            for line in lines:
+                new_file.write(line)
+        """
+    return
+
+def start_so2ban():
     handler = RequestHandler
     server = HTTPServer(server_address, handler)
     server.serve_forever()
 
+def main():
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--install",action="store_true",help="Install so2ban")
+    args = parser.parse_args()
+    if args.install:
+        install_so2ban()
+    else:
+        start_so2ban()
+  
 if __name__ == "__main__":
     main()
