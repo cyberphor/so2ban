@@ -20,11 +20,11 @@ acl_name = "BLOCK_ADVERSARY"
 
 class RequestHandler(BaseHTTPRequestHandler):
     def block(self, acl_name, adversary):
-        acl = "ip access-list " + acl_name
+        acl = "ip access-list standard" + acl_name
         ace = "1 deny " + adversary
         commands = [acl, ace]
         with netmiko.ConnectHandler(**router) as net_connect:
-            net_connect.send_command_set(commands)
+            net_connect.send_config_set(commands)
         message = "Blocking " + adversary + "\n"
         self.wfile.write(message.encode("UTF-8"))
     def do_GET(self):
