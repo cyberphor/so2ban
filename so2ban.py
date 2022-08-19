@@ -12,19 +12,19 @@ port = 666
 server_address = (ip, port)
 router = {
     "device_type": "cisco_ios",
-    "host": "router",
+    "host": "192.168.1.1",
     "username": "admin",
     "password": "password",
 }
+acl_name = "BLOCK_ADVERSARY"
 
 class RequestHandler(BaseHTTPRequestHandler):
-    def block(self, adversary):
-        """
-        command = "" # block command goes here
-            with ConnectHandler(**router) as net_connect:
-        output = net_connect.send_command(command)
-        print(output)
-        """
+    def block(self, acl_name, adversary):
+        acl = "ip access-list " + acl_name
+        ace = "1 deny " + adversary
+        commands = [acl, ace]
+        with ConnectHandler(**router) as net_connect:
+            net_connect.send_command_set(commands)
         message = "Blocking " + adversary + "\n"
         self.wfile.write(message.encode("UTF-8"))
     def do_GET(self):
