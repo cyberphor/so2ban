@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 
 from http.server import BaseHTTPRequestHandler, HTTPServer
-# from netmiko import ConnectHandler
 import argparse
 import ipaddress
+import netmiko
 import shutil
 import subprocess
 
@@ -23,7 +23,7 @@ class RequestHandler(BaseHTTPRequestHandler):
         acl = "ip access-list " + acl_name
         ace = "1 deny " + adversary
         commands = [acl, ace]
-        with ConnectHandler(**router) as net_connect:
+        with netmiko.ConnectHandler(**router) as net_connect:
             net_connect.send_command_set(commands)
         message = "Blocking " + adversary + "\n"
         self.wfile.write(message.encode("UTF-8"))
