@@ -37,7 +37,7 @@ class RequestHandler(BaseHTTPRequestHandler):
                 self.send_response(200)
                 self.send_header('Content-type', 'text/html')
                 self.end_headers()
-                self.block(adversary)
+                self.block(acl_name, adversary)
             except ValueError:
                 self.send_error(400)
         else:
