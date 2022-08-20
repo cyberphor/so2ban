@@ -46,7 +46,7 @@ class RequestHandler(http.server.BaseHTTPRequestHandler):
 def install_so2ban():
     default_action_menu = "/opt/so/saltstack/default/salt/soc/files/soc/menu.actions.json"
     local_action_menu = "/opt/so/saltstack/local/salt/soc/files/soc/menu.actions.json"
-    so2ban = "foo"
+    so2ban = "foo\n"
     with open(default_action_menu) as default:
         menu = default.readlines()
         second_to_last_line = len(menu) - 1
