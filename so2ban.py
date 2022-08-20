@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
-from http.server import BaseHTTPRequestHandler, HTTPServer
 import argparse
+import http.server
 import ipaddress
 import netmiko
 import shutil
@@ -17,12 +17,12 @@ router = {
     "password": "password",
 }
 acl_name = "BLOCK_ADVERSARY"
+acl = "ip access-list standard " + acl_name
+ace = "1 deny "
 
-class RequestHandler(BaseHTTPRequestHandler):
+class RequestHandler(http.server.BaseHTTPRequestHandler):
     def block(self, acl_name, adversary):
-        acl = "ip access-list standard" + acl_name
-        ace = "1 deny " + adversary
-        commands = [acl, ace]
+        commands = [acl, (ace + adversary)]
         with netmiko.ConnectHandler(**router) as net_connect:
             net_connect.send_config_set(commands)
         message = "Blocking " + adversary + "\n"
@@ -44,30 +44,27 @@ class RequestHandler(BaseHTTPRequestHandler):
             self.send_error(404)
 
 def install_so2ban():
-    default_action_menu_filepath = "/opt/so/saltstack/default/salt/soc/files/soc/menu.actions.json"
-    local_action_menu_filepath = "/opt/so/saltstack/local/salt/soc/files/soc/menu.actions.json"
-    shutil.copyfile(default_action_menu_filepath, local_action_menu_filepath)
-    
-    new_action = "foo"
-    with open(local_action_menu_filepath) as local_action_menu_file:
-        local_action_menu = local_action_menu_file.readlines()
-        second_to_last_line = len(local_action_menu) - 1
-        local_action_menu.insert(second_to_last_line, new_action)
-        """
-        with open('new_file.txt', 'w') as new_file:
-            for line in lines:
-                new_file.write(line)
-        """
+    default_action_menu = "/opt/so/saltstack/default/salt/soc/files/soc/menu.actions.json"
+    local_action_menu = "/opt/so/saltstack/local/salt/soc/files/soc/menu.actions.json"
+    so2ban = "foo"
+    with open(default_action_menu) as default:
+        menu = default.readlines()
+        second_to_last_line = len(menu) - 1
+        menu.insert(second_to_last_line, so2ban)
+        with open(local_action_menu, 'w') as local:
+            for action in menu:
+                local.write(action)
+    subprocess.run("so-soc-restart", stdout = subprocess.PIPE, check=True)
     return
 
 def start_so2ban():
     handler = RequestHandler
-    server = HTTPServer(server_address, handler)
+    server = http.server.HTTPServer(server_address, handler)
     server.serve_forever()
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument("--install",action="store_true",help="Install so2ban")
+    parser.add_argument("--install", action = "store_true", help = "Install so2ban")
     args = parser.parse_args()
     if args.install:
         install_so2ban()
