@@ -46,7 +46,7 @@ class RequestHandler(http.server.BaseHTTPRequestHandler):
 def install_so2ban():
     default_action_menu = "/opt/so/saltstack/default/salt/soc/files/soc/menu.actions.json"
     local_action_menu = "/opt/so/saltstack/local/salt/soc/files/soc/menu.actions.json"
-    so2ban = "foo\n"
+    so2ban = " ,{ 'name': 'Block at Network Perimeter', 'description': '', 'icon': 'fa-external-link-alt', 'target': '_blank','links': [ 'http://%s:%s/block/{value}' ]}\n" % (ip, port)
     with open(default_action_menu) as default:
         menu = default.readlines()
         second_to_last_line = len(menu) - 1
