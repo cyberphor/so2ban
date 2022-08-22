@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 
 import argparse
 import http.server
@@ -36,8 +35,8 @@ class RequestHandler(http.server.BaseHTTPRequestHandler):
             try:
                 ipaddress.ip_address(adversary)
                 self.send_response(200)
-                self.send_header("Content-type", "text/html")
-                self.send_header("Content-Security-Policy", "default-src 'self'")
+                self.send_header("Content-Type", "text/html")
+                self.send_header("Content-Security-Policy", "default-src 'self'; connect-src 'self'")
                 self.end_headers()
                 self.block(acl_name, adversary)
             except ValueError:
