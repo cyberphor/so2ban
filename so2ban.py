@@ -3,7 +3,7 @@ import argparse
 import http.server
 import ipaddress
 import json
-#import netmiko
+import netmiko
 import os
 import subprocess
 
@@ -19,12 +19,13 @@ router = {
 acl_name = "BLOCK_ADVERSARY"
 acl = "ip access-list standard " + acl_name
 ace = "1 deny "
+firewall_exception = "iptables -I INPUT 1 -p tcp --dport 666 -j ACCEPT"
 
 class RequestHandler(http.server.BaseHTTPRequestHandler):
     def block(self, acl_name, adversary):
         commands = [acl, (ace + adversary)]
-        #with netmiko.ConnectHandler(**router) as net_connect:
-        #    net_connect.send_config_set(commands)
+        with netmiko.ConnectHandler(**router) as net_connect:
+            net_connect.send_config_set(commands)
         message = "Blocking " + adversary + "\n"
         self.wfile.write(message.encode("UTF-8"))
     def do_GET(self):
@@ -59,7 +60,14 @@ def install_so2ban():
     }
     so2ban_action = " ," + json.dumps(so2ban) + "\n"
     if os.path.exists(local_action_menu):
-        print("Adding so2ban to the local SOC action menu.")
+        print("Adding so2ban to the local action menu.")
+        with open(local_action_menu) as current:
+            menu = current.readlines()
+            second_to_last_line = len(menu) - 1
+            menu.insert(second_to_last_line, so2ban_action)
+            with open(local_action_menu, 'w') as updated:
+                for action in menu:
+                    updated.write(action)
     else:
         print("Creating a custom SOC action menu and adding so2ban to it.")
         with open(default_action_menu) as default:
@@ -74,7 +82,7 @@ def install_so2ban():
             subprocess.run("so-soc-restart", stdout = subprocess.PIPE, check = True)
             print("Done!")
             print("Adding a rule to iptables...")
-            subprocess.run("iptables -I INPUT 1 -p tcp --dport 666 -j ACCEPT", stdout = subprocess.PIPE, check = True)
+            subprocess.run(firewall_exception, stdout = subprocess.PIPE, check = True)
             print("Done!")
         except:
             print()
