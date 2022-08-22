@@ -5,11 +5,14 @@ import ipaddress
 import json
 import netmiko
 import os
+import shutil
+import ssl
 import subprocess
 
 ip = "192.168.1.19"
 port = 666
 server_address = (ip, port)
+certificate = "localhost.pem"
 router = {
     "device_type": "cisco_ios",
     "host": "192.168.1.1",
@@ -37,7 +40,6 @@ class RequestHandler(http.server.BaseHTTPRequestHandler):
                 ipaddress.ip_address(adversary)
                 self.send_response(200)
                 self.send_header("Content-Type", "text/html")
-                self.send_header("Content-Security-Policy", "default-src 'self'; connect-src 'self'")
                 self.end_headers()
                 self.block(acl_name, adversary)
             except ValueError:
@@ -48,7 +50,7 @@ class RequestHandler(http.server.BaseHTTPRequestHandler):
 def install_so2ban():
     default_action_menu = "/opt/so/saltstack/default/salt/soc/files/soc/menu.actions.json"
     local_action_menu = "/opt/so/saltstack/local/salt/soc/files/soc/menu.actions.json"
-    so2ban_api = "http://%s:%s/block/{value}" % (ip, port)
+    so2ban_api = "https://%s:%s/block/{value}" % (ip, port)
     so2ban = {
         "name": "Block",
         "description": "Block at network perimeter",
@@ -89,8 +91,11 @@ def install_so2ban():
     return
 
 def start_so2ban():
+    generate_ssl_certificate = "openssl req -new -x509 -keyout %s -out localhost.pem -days 365 -nodes" % certificate
+    subprocess.run(generate_ssl_certificate, stdout = subprocess.PIPE, check = True)
     handler = RequestHandler
     server = http.server.HTTPServer(server_address, handler)
+    server.socket = ssl.wrap_socket(server.socket, server_side = True, certfile = certificate, ssl_version = ssl.PROTOCOL_TLS)
     server.serve_forever()
 
 def main():
