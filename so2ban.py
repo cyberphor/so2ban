@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 
 import argparse
 import http.server
@@ -12,7 +13,7 @@ import subprocess
 ip = "192.168.1.19"
 port = 666
 server_address = (ip, port)
-certificate = "localhost.pem"
+server_certificate = "localhost.pem"
 router = {
     "device_type": "cisco_ios",
     "host": "192.168.1.1",
@@ -91,7 +92,7 @@ def install_so2ban():
     return
 
 def start_so2ban():
-    generate_ssl_certificate = "openssl req -new -x509 -keyout %s -out localhost.pem -days 365 -nodes" % certificate
+    generate_ssl_certificate = "openssl req -new -x509 -keyout %s -out localhost.pem -days 365 -nodes" % server_certificate
     subprocess.run(generate_ssl_certificate, stdout = subprocess.PIPE, check = True)
     handler = RequestHandler
     server = http.server.HTTPServer(server_address, handler)
