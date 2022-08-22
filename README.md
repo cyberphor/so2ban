@@ -1,4 +1,4 @@
-## soda
+## Soda
 Python scripts for augmenting Security Onion. 
 
 ## Copyright
