@@ -13,7 +13,12 @@ import subprocess
 ip = "192.168.1.19"
 port = 666
 server_address = (ip, port)
-server_certificate = "localhost.pem"
+country = "US" 
+locale = "New York"
+city = "New York City"
+company = "Allsafe" 
+section = "Cybersecurity"
+subject = "/C=%s/ST=%s/L=%s/O=%s/OU=%s/CN=%s" % (country, state, locale, company, section)
 router = {
     "device_type": "cisco_ios",
     "host": "192.168.1.1",
@@ -47,7 +52,7 @@ class RequestHandler(http.server.BaseHTTPRequestHandler):
                 self.send_error(400)
         else:
             self.send_error(404)
-
+            
 def install_so2ban():
     default_action_menu = "/opt/so/saltstack/default/salt/soc/files/soc/menu.actions.json"
     local_action_menu = "/opt/so/saltstack/local/salt/soc/files/soc/menu.actions.json"
@@ -91,23 +96,46 @@ def install_so2ban():
             print()
     return
 
+def generate_certificate(subject, certificate):
+    openssl = "openssl req -new -x509 -keyout %s -out %s -days 365 -nodes -subject '%s'" % (certificate, certificate, subject)
+    subprocess.run(openssl, stdout = subprocess.PIPE, check = True)
+
 def start_so2ban():
-    generate_ssl_certificate = "openssl req -new -x509 -keyout %s -out localhost.pem -days 365 -nodes" % server_certificate
-    subprocess.run(generate_ssl_certificate, stdout = subprocess.PIPE, check = True)
     handler = RequestHandler
     server = http.server.HTTPServer(server_address, handler)
     server.socket = ssl.wrap_socket(server.socket, server_side = True, certfile = certificate, ssl_version = ssl.PROTOCOL_TLS)
     server.serve_forever()
 
+def show_acl(acl_name):
+    with netmiko.ConnectHandler(**router) as net_connect:
+        command = "show run | section ip access-list standard " + acl_name
+        acl = net_connect.send_command(command)
+        print(acl)
+
+def unblock_host(acl_name, host):
+    with netmiko.ConnectHandler(**router) as net_connect:
+        commands = [
+            ("ip access-list standard " + acl_name),
+            ("no deny " + host)
+        ]
+        net_connect.send_config_set(commands)
+    
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--install", action = "store_true", help = "Install so2ban")
     parser.add_argument("--start", action = "store_true", help = "Start so2ban")
+    parser.add_argument("--show-acl", action = "store_true", help = "Show access control list")
+    parser.add_argument("--unblock-host", action = "store_true", help = "Unblock host")
     args = parser.parse_args()
     if args.install:
+        generate_certificate()
         install_so2ban()
     elif args.start:
         start_so2ban()
+    elif args.show_acl:
+        show_acl()
+    elif args.unblock_host:
+        unblock_host()
     else:
         parser.print_help()
   
