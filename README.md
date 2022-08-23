@@ -13,7 +13,7 @@ cd so2ban
 bash Get-Requirements.sh
 ```
 
-**Step 3.** Copy everything from your Internet-accessible computer to Security Onion using SCP. 
+**Step 3.** Copy everything from your Internet-accessible computer to Security Onion using SCP. An alternative method is burning `so2ban` and the files downloaded in Step 2 to disk. 
 ```bash
 scp -r so2ban/ victor@192.168.1.69:~
 ```
