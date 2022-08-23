@@ -1,17 +1,28 @@
 ## so2ban
 Blocks IP addresses from the Security Onion Console.
 
-**How to Copy Multiple Files to Security Onion Using SSH and SCP**
+### How to Install so2ban on Security Onion
+**Step 1.** Download this GitHub repository using an Internet-accessible computer. 
+```
+git clone https://github.com/cyberphor/so2ban
+```
+
+**Step 2.** Run `Get-Requirements.sh` using an Internet-accessible computer.
+```
+cd so2ban
+bash Get-Requirements.sh
+```
+
+**Step 3.** Copy everything from your Internet-accessible computer to Security Onion using SCP. 
 ```bash
 scp -r so2ban/ victor@192.168.1.69:~
 ```
 
-**How to Enable SSH on a Cisco Router**
-```
-config t
-line vty 0 4
-login local
-transport input ssh
+**Step 4.** Install Netmiko and its dependencies on Security Onion. 
+```bash
+cd so2ban
+cd netmiko
+pip3 install --no-index --find-links . -r requirements.txt
 ```
 
 ## Copyright
