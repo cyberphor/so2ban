@@ -9,7 +9,8 @@ git clone https://github.com/cyberphor/so2ban.git
 
 **Step 2.** Run `Get-Requirements.sh` using an Internet-accessible computer.
 ```
-bash so2ban/Get-Requirements.sh
+cd so2ban
+bash Get-Requirements.sh
 ```
 
 **Step 3.** Copy everything from your Internet-accessible computer to Security Onion using SCP. An alternative method is burning `so2ban` and the files downloaded in Step 2 to a CD or USB drive. 
