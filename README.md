@@ -23,6 +23,12 @@ scp -r so2ban/ victor@192.168.1.69:~
 ```bash
 cd so2ban/netmiko
 pip3 install --no-index --find-links . -r requirements.txt
+cd ../
+```
+
+**Step 5.** Run `so2ban.py` with the `--install` parameter on Security Onion. 
+```bash
+sudo python3 so2ban.py --install
 ```
 
 ## Copyright
