@@ -10,15 +10,18 @@ import shutil
 import ssl
 import subprocess
 
-ip = "192.168.1.19"
+ip = "192.168.32.131"
 port = 666
 server_address = (ip, port)
 country = "US" 
-locale = "New York"
-city = "New York City"
+state = "New York"
+locale = "New York City"
 company = "Allsafe" 
 section = "Cybersecurity"
-subject = "/C=%s/ST=%s/L=%s/O=%s/OU=%s/CN=%s" % (country, state, locale, company, section)
+common_name = os.uname()[1]
+fields = (country, state, locale, company, section, common_name)
+subject = "-subj '/C=%s/ST=%s/L=%s/O=%s/OU=%s/CN=%s' " % fields
+certfile_name = "so2ban.pem"
 router = {
     "device_type": "cisco_ios",
     "host": "192.168.1.1",
@@ -96,14 +99,17 @@ def install_so2ban():
             print()
     return
 
-def generate_certificate(subject, certificate):
-    openssl = "openssl req -new -x509 -keyout %s -out %s -days 365 -nodes -subject '%s'" % (certificate, certificate, subject)
-    subprocess.run(openssl, stdout = subprocess.PIPE, check = True)
-
 def start_so2ban():
+    request = "req -new -x509 -days 365 -nodes "
+    openssl = "openssl " + request + subject + certfile_name
+    subprocess.run(openssl, stdout = subprocess.PIPE, check = True)
     handler = RequestHandler
-    server = http.server.HTTPServer(server_address, handler)
-    server.socket = ssl.wrap_socket(server.socket, server_side = True, certfile = certificate, ssl_version = ssl.PROTOCOL_TLS)
+    try:
+        server = http.server.HTTPServer(server_address, handler)
+        server.socket = ssl.wrap_socket(server.socket, server_side = True, certfile = certfile_name, ssl_version = ssl.PROTOCOL_TLS)
+    except OSError as e:
+        print(e)
+        print("[Solution] Update the 'ip' variable.")
     server.serve_forever()
 
 def show_acl(acl_name):
@@ -128,7 +134,6 @@ def main():
     parser.add_argument("--unblock-host", action = "store_true", help = "Unblock host")
     args = parser.parse_args()
     if args.install:
-        generate_certificate()
         install_so2ban()
     elif args.start:
         start_so2ban()
