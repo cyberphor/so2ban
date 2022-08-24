@@ -63,7 +63,7 @@ def install_so2ban():
     so2ban = {
         "name": "Block",
         "description": "Block at network perimeter",
-        "icon": "fa-crosshairs",
+        "icon": "fas fa-shield-alt",
         "target": "_blank",
         "links": [ so2ban_api ],
         "background": True,
