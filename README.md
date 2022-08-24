@@ -2,7 +2,7 @@
 Blocks IP addresses from the Security Onion Console.
 
 ### How to Install so2ban on Security Onion
-**Step 1.** Download this GitHub repository using an Internet-accessible computer. 
+**Step 1.** Download this GitHub repository using an Internet-accessible computer. Steps 2 to 4 were written for someone who has an air-gap instance of Security Onion. If this does not apply to you, skip ahead to Step 5. 
 ```
 git clone https://github.com/cyberphor/so2ban.git
 ```
@@ -14,12 +14,12 @@ bash Get-Requirements.sh
 cd ../
 ```
 
-**Step 3.** Copy everything from your Internet-accessible computer to Security Onion using SCP. An alternative method is burning `so2ban` and the files downloaded in Step 2 to a CD or USB drive. 
+**Step 3.** Copy everything from your Internet-accessible computer to Security Onion using SCP (an alternative method is burning `so2ban` and the files downloaded in Step 2 to a CD or USB drive). 
 ```bash
 scp -r so2ban/ victor@192.168.1.69:~
 ```
 
-**Step 4.** Install Netmiko and its dependencies on Security Onion. 
+**Step 4.** Install the Python library "Netmiko" and its dependencies on Security Onion. `so2ban` leverages "Netmiko" to access and modify devices at the network perimeter. 
 ```bash
 cd so2ban/netmiko
 pip3 install --no-index --find-links . -r requirements.txt
