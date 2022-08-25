@@ -10,7 +10,7 @@ import shutil
 import ssl
 import subprocess
 
-ip = "192.168.32.131"
+ip = "192.168.1.69"
 port = 666
 server_address = (ip, port)
 certfile_name = "so2ban.pem"
@@ -23,7 +23,6 @@ router = {
 acl_name = "BLOCK_ADVERSARY"
 acl = "ip access-list standard " + acl_name
 ace = "1 deny "
-firewall_exception = "iptables -I INPUT 1 -p tcp --dport 666 -j ACCEPT"
 
 class RequestHandler(http.server.BaseHTTPRequestHandler):
     def block(self, acl_name, adversary):
@@ -49,7 +48,7 @@ class RequestHandler(http.server.BaseHTTPRequestHandler):
             self.send_error(404)
 
 def create_certificate():
-    print("Creating a self-signed certificate.")
+    print("Creating a self-signed certificate...")
     country = "US" 
     state = "New York"
     locale = "New York City"
@@ -73,9 +72,17 @@ def create_certificate():
         certfile_name
     ]
     subprocess.run(openssl, stdout = subprocess.PIPE, check = True)
+    print("Done!")
     return
 
-def install_so2ban():
+def install_requirements():
+    pip = ["pip3","install","--no-index","--find-links",".","-r","requirements.txt"]
+    print("Installing required Python libraries...")
+    subprocess.run(pip, cwd = "so2ban/netmiko", stdout = subprocess.PIPE, check = True)
+    print("Done!")
+    return
+
+def update_action_menu():
     default_action_menu = "/opt/so/saltstack/default/salt/soc/files/soc/menu.actions.json"
     local_action_menu = "/opt/so/saltstack/local/salt/soc/files/soc/menu.actions.json"
     so2ban_api = "https://%s:%s/block/{value}" % (ip, port)
@@ -90,7 +97,7 @@ def install_so2ban():
     }
     so2ban_action = " ," + json.dumps(so2ban) + "\n"
     if os.path.exists(local_action_menu):
-        print("Adding so2ban to the local action menu.")
+        print("Adding so2ban to the local action menu...")
         with open(local_action_menu) as current:
             menu = current.readlines()
             second_to_last_line = len(menu) - 1
@@ -98,8 +105,9 @@ def install_so2ban():
             with open(local_action_menu, 'w') as updated:
                 for action in menu:
                     updated.write(action)
+        print("Done!")
     else:
-        print("Creating a custom SOC action menu and adding so2ban to it.")
+        print("Creating a custom SOC action menu and adding so2ban to it...")
         with open(default_action_menu) as default:
             menu = default.readlines()
             second_to_last_line = len(menu) - 1
@@ -107,15 +115,20 @@ def install_so2ban():
             with open(local_action_menu, 'w') as local:
                 for action in menu:
                     local.write(action)
-        try:
-            print("Restarting the Security Onion Console...")
-            subprocess.run("so-soc-restart", stdout = subprocess.PIPE, check = True)
-            print("Done!")
-            print("Adding a rule to iptables...")
-            subprocess.run(firewall_exception, stdout = subprocess.PIPE, check = True)
-            print("Done!")
-        except:
-            print()
+        print("Done!")
+    return
+
+def restart_soc():
+    print("Restarting the Security Onion Console...")
+    subprocess.run("so-soc-restart", stdout = subprocess.PIPE, check = True)
+    print("Done!")
+    return
+
+def add_firewall_exemption():
+    iptables = ["iptables","-I","INPUT","1","-p","tcp","--dport","666","-j","ACCEPT"]
+    print("Adding firewall exemption to iptables...")
+    subprocess.run(iptables, stdout = subprocess.PIPE, check = True)
+    print("Done!")
     return
 
 def start_so2ban():
@@ -151,8 +164,11 @@ def main():
     parser.add_argument("--unblock-host", action = "store_true", help = "Unblock host")
     args = parser.parse_args()
     if args.install:
+        install_requirements()
         create_certificate()
-        #install_so2ban()
+        update_action_menu()
+        restart_soc()
+        add_firewall_exemption()
     elif args.start:
         start_so2ban()
     elif args.show_acl:
