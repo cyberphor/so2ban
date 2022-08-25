@@ -76,9 +76,9 @@ def create_certificate():
     return
 
 def install_requirements():
-    pip = ["pip3","install","--no-index","--find-links",".","-r","requirements.txt"]
+    pip = ["pip3","install","--no-index","--find-links",".","-r","requirements.txt","--no-binary",":all:"]
     print("Installing required Python libraries...")
-    subprocess.run(pip, cwd = "netmiko", stdout = subprocess.PIPE, check = True)
+    subprocess.run(pip, stdout = subprocess.PIPE, cwd = "netmiko",check = True)
     print("Done!")
     return
 
