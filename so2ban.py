@@ -13,14 +13,6 @@ import subprocess
 ip = "192.168.32.131"
 port = 666
 server_address = (ip, port)
-country = "US" 
-state = "New York"
-locale = "New York City"
-company = "Allsafe" 
-section = "Cybersecurity"
-common_name = os.uname()[1]
-fields = (country, state, locale, company, section, common_name)
-subject = "-subj '/C=%s/ST=%s/L=%s/O=%s/OU=%s/CN=%s' " % fields
 certfile_name = "so2ban.pem"
 router = {
     "device_type": "cisco_ios",
@@ -55,7 +47,34 @@ class RequestHandler(http.server.BaseHTTPRequestHandler):
                 self.send_error(400)
         else:
             self.send_error(404)
-            
+
+def create_certificate():
+    print("Creating a self-signed certificate.")
+    country = "US" 
+    state = "New York"
+    locale = "New York City"
+    company = "Allsafe" 
+    section = "Cybersecurity"
+    common_name = os.uname()[1]
+    fields = country, state, locale, company, section, common_name
+    openssl = [
+        "openssl",
+        "req",
+        "-new",
+        "-x509",
+        "-days",
+        "365",
+        "-nodes",
+        "-subj",
+        ("/C=%s/ST=%s/L=%s/O=%s/OU=%s/CN=%s" % fields),
+        "-keyout",
+        certfile_name,
+        "-out",
+        certfile_name
+    ]
+    subprocess.run(openssl, stdout = subprocess.PIPE, check = True)
+    return
+
 def install_so2ban():
     default_action_menu = "/opt/so/saltstack/default/salt/soc/files/soc/menu.actions.json"
     local_action_menu = "/opt/so/saltstack/local/salt/soc/files/soc/menu.actions.json"
@@ -100,31 +119,29 @@ def install_so2ban():
     return
 
 def start_so2ban():
-    request = "req -new -x509 -days 365 -nodes "
-    openssl = "openssl " + request + subject + certfile_name
-    subprocess.run(openssl, stdout = subprocess.PIPE, check = True)
     handler = RequestHandler
-    try:
-        server = http.server.HTTPServer(server_address, handler)
-        server.socket = ssl.wrap_socket(server.socket, server_side = True, certfile = certfile_name, ssl_version = ssl.PROTOCOL_TLS)
-    except OSError as e:
-        print(e)
-        print("[Solution] Update the 'ip' variable.")
+    server = http.server.HTTPServer(server_address, handler)
+    server.socket = ssl.wrap_socket(
+        server.socket,
+        server_side = True,
+        certfile = certfile_name,
+        ssl_version = ssl.PROTOCOL_TLS
+    )
     server.serve_forever()
 
 def show_acl(acl_name):
-    with netmiko.ConnectHandler(**router) as net_connect:
+    with netmiko.ConnectHandler(**router) as connection:
         command = "show run | section ip access-list standard " + acl_name
-        acl = net_connect.send_command(command)
+        acl = connection.send_command(command)
         print(acl)
 
 def unblock_host(acl_name, host):
-    with netmiko.ConnectHandler(**router) as net_connect:
+    with netmiko.ConnectHandler(**router) as connection:
         commands = [
             ("ip access-list standard " + acl_name),
             ("no deny " + host)
         ]
-        net_connect.send_config_set(commands)
+        connection.send_config_set(commands)
     
 def main():
     parser = argparse.ArgumentParser()
@@ -134,7 +151,8 @@ def main():
     parser.add_argument("--unblock-host", action = "store_true", help = "Unblock host")
     args = parser.parse_args()
     if args.install:
-        install_so2ban()
+        create_certificate()
+        #install_so2ban()
     elif args.start:
         start_so2ban()
     elif args.show_acl:
