@@ -11,16 +11,17 @@ git clone https://github.com/cyberphor/so2ban.git
 ```
 cd so2ban
 bash Get-Requirements.sh
-cd ../
+cd ..
 ```
 
 **Step 3.** Copy everything from your Internet-accessible computer to Security Onion using SCP (an alternative method is burning `so2ban` and the files downloaded in Step 2 to a CD or USB drive). 
 ```bash
-scp -r so2ban/ victor@192.168.1.69:~
+scp -r so2ban victor@192.168.1.69:~
 ```
 
-**Step 4.** Run `so2ban.py` with the `--install` parameter on Security Onion. 
+**Step 4.** Login to your Security Onion instance and run `so2ban.py` with the `--install` parameter.
 ```bash
+cd so2ban
 sudo python3 so2ban.py --install
 ```
 
