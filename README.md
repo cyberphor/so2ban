@@ -1,5 +1,5 @@
 ## so2ban
-Blocks IP addresses from the Security Onion Console.  
+Blocks IP addresses via the Security Onion Console.
 
 ### How to Install so2ban on Security Onion
 **Step 1.** Download this GitHub repository using an Internet-accessible computer. Steps 2 and 3 were written for someone who has an air-gap instance of Security Onion. If this does not apply to you, skip ahead to Step 4. 
