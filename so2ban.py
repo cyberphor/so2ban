@@ -105,7 +105,6 @@ def update_action_menu():
             with open(local_action_menu, 'w') as updated:
                 for action in menu:
                     updated.write(action)
-        print("Done!")
     else:
         print("Creating a custom SOC action menu and adding so2ban to it...")
         with open(default_action_menu) as default:
@@ -115,7 +114,7 @@ def update_action_menu():
             with open(local_action_menu, 'w') as local:
                 for action in menu:
                     local.write(action)
-        print("Done!")
+    print("Done!")
     return
 
 def restart_soc():
@@ -141,12 +140,14 @@ def start_so2ban():
         ssl_version = ssl.PROTOCOL_TLS
     )
     server.serve_forever()
+    return
 
 def show_acl(acl_name):
     with netmiko.ConnectHandler(**router) as connection:
         command = "show run | section ip access-list standard " + acl_name
         acl = connection.send_command(command)
         print(acl)
+    return
 
 def unblock_host(acl_name, host):
     with netmiko.ConnectHandler(**router) as connection:
@@ -155,6 +156,7 @@ def unblock_host(acl_name, host):
             ("no deny " + host)
         ]
         connection.send_config_set(commands)
+    return
     
 def main():
     parser = argparse.ArgumentParser()
@@ -177,6 +179,7 @@ def main():
         unblock_host()
     else:
         parser.print_help()
+    return
   
 if __name__ == "__main__":
     main()
