@@ -76,9 +76,9 @@ def create_certificate():
     return
 
 def install_requirements():
-    pip = ["pip3","install","--no-index","--find-links",".","-r","requirements.txt","--no-binary",":all:"]
+    pip = ["pip3","install","-e","netmiko","--no-index","--find-links","netmiko"]
     print("Installing required Python libraries...")
-    subprocess.run(pip, stdout = subprocess.PIPE, cwd = "netmiko",check = True)
+    subprocess.run(pip, stdout = subprocess.PIPE, check = True)
     print("Done!")
     return
 
@@ -157,7 +157,7 @@ def unblock_host(acl_name, host):
         ]
         connection.send_config_set(commands)
     return
-    
+
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--install", action = "store_true", help = "Install so2ban")
