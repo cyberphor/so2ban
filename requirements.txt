@@ -1,3 +1,2 @@
-future == 0.18.2
-setuptools_scm
+pip == 21.3.1
 netmiko == 4.0.0
