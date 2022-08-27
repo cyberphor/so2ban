@@ -19,7 +19,7 @@ scp -r so2ban victor@192.168.1.69:~
 
 **Step 4.** Login to your Security Onion Manager Node and install all `so2ban` dependencies. 
 ```
-pip3 install --no-index --find-links so2ban/ -r so2ban/requirements.txt
+pip3 install -r so2ban/requirements.txt --no-index --find-links so2ban/
 ```
 
 **Step 5.** Run `so2ban.py` with the `--install` parameter.
