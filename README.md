@@ -1,7 +1,7 @@
 ## so2ban
 Blocks IP addresses via the Security Onion Console.
 
-### How to Install so2ban on Air-Gapped Security Onion Manager Node
+### How to Install so2ban on an Air-Gapped Security Onion Manager Node
 **Step 1.** Download this GitHub repository using an Internet-accessible computer. 
 ```
 git clone https://github.com/cyberphor/so2ban.git
@@ -13,7 +13,7 @@ pip3 download -r so2ban/requirements.txt -d so2ban --no-binary :all: --no-cache-
 ```
 
 **Step 3.** Upload the entire `so2ban` directory from your Internet-accessible computer to your Security Onion Manager Node using either a CD, USB drive, or SCP. 
-```bash
+```
 scp -r so2ban victor@192.168.1.69:~
 ```
 
@@ -23,7 +23,7 @@ pip3 install --no-index --find-links so2ban/ -r so2ban/requirements.txt
 ```
 
 **Step 5.** Run `so2ban.py` with the `--install` parameter.
-```bash
+```
 cd so2ban
 sudo python3 so2ban.py --install
 ```
