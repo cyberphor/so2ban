@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+usr/bin/env python3
 
 import argparse
 import http.server
@@ -9,20 +9,6 @@ import os
 import shutil
 import ssl
 import subprocess
-
-ip = "192.168.1.69"
-port = 666
-server_address = (ip, port)
-certfile_name = "so2ban.pem"
-router = {
-    "device_type": "cisco_ios",
-    "host": "192.168.1.1",
-    "username": "admin",
-    "password": "password",
-}
-acl_name = "BLOCK_ADVERSARY"
-acl = "ip access-list standard " + acl_name
-ace = "1 deny "
 
 class RequestHandler(http.server.BaseHTTPRequestHandler):
     def block(self, acl_name, adversary):
@@ -75,13 +61,6 @@ def create_certificate():
     print("Done!")
     return
 
-def install_requirements():
-    pip = ["pip3","install","-e","netmiko","--no-index","--find-links","netmiko"]
-    print("Installing required Python libraries...")
-    subprocess.run(pip, stdout = subprocess.PIPE, check = True)
-    print("Done!")
-    return
-
 def update_action_menu():
     default_action_menu = "/opt/so/saltstack/default/salt/soc/files/soc/menu.actions.json"
     local_action_menu = "/opt/so/saltstack/local/salt/soc/files/soc/menu.actions.json"
@@ -124,7 +103,7 @@ def restart_soc():
     return
 
 def add_firewall_exemption():
-    iptables = ["iptables","-I","INPUT","1","-p","tcp","--dport","666","-j","ACCEPT"]
+    iptables = ["iptables","-I","INPUT","1","-p","tcp","--dport","8666","-j","ACCEPT"]
     print("Adding firewall exemption to iptables...")
     subprocess.run(iptables, stdout = subprocess.PIPE, check = True)
     print("Done!")
@@ -159,14 +138,33 @@ def unblock_host(acl_name, host):
     return
 
 def main():
+    ip = "192.168.1.69"
+    port = 8666
+    server_address = (ip, port)
+    certfile_name = "so2ban.pem"
+    device = {
+        "device_type": "",
+        "host": "",
+        "username": "",
+        "password": "",
+    }
+    device["device_type"] = "cisco_ios"
+    device["host"] = "192.168.1.1"
+    device["username"] = "admin"
+    device["password"] = "password"
+    acl_name = "BLOCK_ADVERSARY"
+    acl = "ip access-list standard " + acl_name
+    ace = "1 deny "
     parser = argparse.ArgumentParser()
     parser.add_argument("--install", action = "store_true", help = "Install so2ban")
     parser.add_argument("--start", action = "store_true", help = "Start so2ban")
     parser.add_argument("--show-acl", action = "store_true", help = "Show access control list")
-    parser.add_argument("--unblock-host", action = "store_true", help = "Unblock host")
+    parser.add_argument("--device-type", choices = ["cisco_ios", "paloalto_panos"], help = "Network device type")
+    parser.add_argument("--device-host", help = "Network device host (e.g., IP, hostname)")
+    parser.add_argument("--device-username", help = "Network device username")
+    parser.add_argument("--device-password", help = "Network device password")
     args = parser.parse_args()
     if args.install:
-        install_requirements()
         create_certificate()
         update_action_menu()
         restart_soc()
