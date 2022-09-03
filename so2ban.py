@@ -10,6 +10,10 @@ import shutil
 import ssl
 import subprocess
 
+ip = "127.0.0.1"
+port = 8666
+certfile = "so2ban.pem"
+
 class BoundaryDevice():
     def __init__(self):
         self.settings = {
@@ -70,19 +74,8 @@ class RequestHandler(http.server.BaseHTTPRequestHandler, BoundaryDevice):
         else:
             self.send_error(404)
 
-device = BoundaryDevice()
-device.settings["device_type"] = "cisco_ios"
-device.settings["host"] = "192.168.1.1"
-device.settings["username"] = "admin"
-device.settings["password"] = "password"
-device.acl_name = "BLOCK_ADVERSARY"
-device.acl_command_prefix = "ip access-list standard"
-device.ace_command_prefix = "1 deny"    
-ip = "127.0.0.1"
-port = 8666
-
-def create_certificate():
-    print("Creating a self-signed certificate...")
+def generate_self_signed_certificate():
+    print("Generating a self-signed certificate...")
     country = "US" 
     state = "New York"
     locale = "New York City"
@@ -101,9 +94,9 @@ def create_certificate():
         "-subj",
         ("/C=%s/ST=%s/L=%s/O=%s/OU=%s/CN=%s" % fields),
         "-keyout",
-        "so2ban.pem",
+        certfile,
         "-out",
-        "so2ban.pem"
+        certfile
     ]
     subprocess.run(openssl, stdout = subprocess.PIPE, check = True)
     print("Done!")
@@ -113,7 +106,7 @@ def update_action_menu():
     default_action_menu = "/opt/so/saltstack/default/salt/soc/files/soc/menu.actions.json"
     local_action_menu = "/opt/so/saltstack/local/salt/soc/files/soc/menu.actions.json"
     link = "https://%s:%s/block/{value}" % (ip, port)
-    so2ban = {
+    action = {
         "name": "Block",
         "description": "Block at network perimeter",
         "icon": "fas fa-shield-alt",
@@ -122,25 +115,18 @@ def update_action_menu():
         "background": True,
         "method": "POST"
     }
-    so2ban_action = " ," + json.dumps(so2ban) + "\n"
+    so2ban = " ," + json.dumps(so2ban) + "\n"
     if os.path.exists(local_action_menu):
-        print("Adding so2ban to the local action menu...")
-        with open(local_action_menu) as current:
-            menu = current.readlines()
-            second_to_last_line = len(menu) - 1
-            menu.insert(second_to_last_line, so2ban_action)
-            with open(local_action_menu, 'w') as updated:
-                for action in menu:
-                    updated.write(action)
+        action_menu = local_action_menu
     else:
-        print("Creating a custom SOC action menu and adding so2ban to it...")
-        with open(default_action_menu) as default:
-            menu = default.readlines()
-            second_to_last_line = len(menu) - 1
-            menu.insert(second_to_last_line, so2ban_action)
-            with open(local_action_menu, 'w') as local:
-                for action in menu:
-                    local.write(action)
+        action_menu = default_action_menu
+    with open(action_menu) as old_action_menu:
+        update = old_action_menu.readlines()
+        second_to_last_line = len(update) - 1
+        update.insert(second_to_last_line, so2ban)
+        with open(local_action_menu, 'w') as new_action_menu:
+            for entry in update:
+                new_action_menu.write(entry)
     print("Done!")
     return
 
@@ -150,14 +136,22 @@ def restart_security_onion_console():
     print("Done!")
     return
 
-def start_listening_api(ip, port):
+def start_listening_api():
     address = (ip, port)
-    handler = RequestHandler
+    device = BoundaryDevice()
+    device.settings["device_type"] = "cisco_ios"
+    device.settings["host"] = "192.168.1.1"
+    device.settings["username"] = "admin"
+    device.settings["password"] = "password"
+    device.acl_name = "BLOCK_ADVERSARY"
+    device.acl_command_prefix = "ip access-list standard"
+    device.ace_command_prefix = "1 deny"
+    handler = RequestHandler(device)
     api = http.server.HTTPServer(address, handler)
     api.socket = ssl.wrap_socket(
         api.socket,
         server_side = True,
-        certfile = "so2ban.pem",
+        certfile = certfile,
         ssl_version = ssl.PROTOCOL_TLS
     )
     api.serve_forever()
@@ -169,7 +163,7 @@ def main():
     parser.add_argument("--start", action = "store_true", help = "Start so2ban")
     args = parser.parse_args()
     if args.install:
-        create_certificate()
+        generate_self_signed_certificate()
         update_action_menu()
         restart_security_onion_console()
     elif args.start:
