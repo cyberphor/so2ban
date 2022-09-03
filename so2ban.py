@@ -147,7 +147,7 @@ def start_listening_api():
     device.acl_command_prefix = "ip access-list standard"
     device.ace_command_prefix = "1 deny"
     handler = RequestHandler
-    api = http.server.HTTPServer(address, handler())
+    api = http.server.HTTPServer(address, handler)
     api.socket = ssl.wrap_socket(
         api.socket,
         server_side = True,
