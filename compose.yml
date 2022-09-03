@@ -1,0 +1,8 @@
+version: "3"
+
+services:
+  so2ban:
+    image: so2ban:latest
+    build: .
+    ports:
+    - "8666:8666"
