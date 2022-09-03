@@ -98,7 +98,7 @@ def generate_self_signed_certificate(so2ban_certificate_name):
     print("Done!")
     return
 
-def start_listening_api(so2ban_ip, so2ban_port):
+def start_listening_api(so2ban_ip, so2ban_port, so2ban_certificate_name):
     address = (so2ban_ip, so2ban_port)
     device = BoundaryDevice()
     device.settings["device_type"] = "cisco_ios"
@@ -166,7 +166,7 @@ def main():
         restart_security_onion_console()
     elif args.start:
         generate_self_signed_certificate(so2ban_certificate_name)
-        start_listening_api(so2ban_ip, so2ban_port)
+        start_listening_api(so2ban_ip, so2ban_port, so2ban_certificate_name)
     else:
         parser.print_help()
     return
