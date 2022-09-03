@@ -115,7 +115,7 @@ def update_action_menu():
         "background": True,
         "method": "POST"
     }
-    so2ban = " ," + json.dumps(so2ban) + "\n"
+    so2ban = " ," + json.dumps(action) + "\n"
     if os.path.exists(local_action_menu):
         action_menu = local_action_menu
     else:
