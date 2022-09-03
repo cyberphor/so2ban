@@ -10,9 +10,9 @@ import shutil
 import ssl
 import subprocess
 
-ip = "127.0.0.1"
-port = 8666
-certfile = "so2ban.pem"
+so2ban_ip = "127.0.0.1"
+so2ban_port = 8666
+so2ban_certificate = "so2ban.pem"
 
 class BoundaryDevice():
     def __init__(self):
@@ -74,7 +74,7 @@ class RequestHandler(http.server.BaseHTTPRequestHandler, BoundaryDevice):
         else:
             self.send_error(404)
 
-def generate_self_signed_certificate():
+def generate_self_signed_certificate(so2ban_certificate_name):
     print("Generating a self-signed certificate...")
     country = "US" 
     state = "New York"
@@ -94,18 +94,39 @@ def generate_self_signed_certificate():
         "-subj",
         ("/C=%s/ST=%s/L=%s/O=%s/OU=%s/CN=%s" % fields),
         "-keyout",
-        certfile,
+        so2ban_certificate_name,
         "-out",
-        certfile
+        so2ban_certificate_name
     ]
     subprocess.run(openssl, stdout = subprocess.PIPE, check = True)
     print("Done!")
     return
 
-def update_action_menu():
+def start_listening_api(so2ban_ip, so2ban_port):
+    address = (so2ban_ip, so2ban_port)
+    device = BoundaryDevice()
+    device.settings["device_type"] = "cisco_ios"
+    device.settings["host"] = "192.168.1.1"
+    device.settings["username"] = "admin"
+    device.settings["password"] = "password"
+    device.acl_name = "BLOCK_ADVERSARY"
+    device.acl_command_prefix = "ip access-list standard"
+    device.ace_command_prefix = "1 deny"
+    handler = RequestHandler
+    api = http.server.HTTPServer(address, handler)
+    api.socket = ssl.wrap_socket(
+        api.socket,
+        server_side = True,
+        certfile = so2ban_certificate_name,
+        ssl_version = ssl.PROTOCOL_TLS
+    )
+    api.serve_forever()
+    return
+
+def update_action_menu(so2ban_ip, so2ban_port):
     default_action_menu = "/opt/so/saltstack/default/salt/soc/files/soc/menu.actions.json"
     local_action_menu = "/opt/so/saltstack/local/salt/soc/files/soc/menu.actions.json"
-    link = "https://%s:%s/block/{value}" % (ip, port)
+    link = "https://%s:%s/block/{value}" % (so2ban_ip, so2ban_port)
     action = {
         "name": "Block",
         "description": "Block at network perimeter",
@@ -136,38 +157,17 @@ def restart_security_onion_console():
     print("Done!")
     return
 
-def start_listening_api():
-    address = (ip, port)
-    device = BoundaryDevice()
-    device.settings["device_type"] = "cisco_ios"
-    device.settings["host"] = "192.168.1.1"
-    device.settings["username"] = "admin"
-    device.settings["password"] = "password"
-    device.acl_name = "BLOCK_ADVERSARY"
-    device.acl_command_prefix = "ip access-list standard"
-    device.ace_command_prefix = "1 deny"
-    handler = RequestHandler
-    api = http.server.HTTPServer(address, handler)
-    api.socket = ssl.wrap_socket(
-        api.socket,
-        server_side = True,
-        certfile = certfile,
-        ssl_version = ssl.PROTOCOL_TLS
-    )
-    api.serve_forever()
-    return
-
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument("--install", action = "store_true", help = "Install so2ban")
+    parser.add_argument("--update-soc", action = "store_true", help = "Add so2ban to the Security Onion Console (SOC)")
     parser.add_argument("--start", action = "store_true", help = "Start so2ban")
     args = parser.parse_args()
-    if args.install:
-        update_action_menu()
+    if args.update_soc:
+        update_action_menu(so2ban_ip, so2ban_port)
         restart_security_onion_console()
     elif args.start:
-        generate_self_signed_certificate()
-        start_listening_api()
+        generate_self_signed_certificate(so2ban_certificate_name)
+        start_listening_api(so2ban_ip, so2ban_port)
     else:
         parser.print_help()
     return

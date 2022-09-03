@@ -4,4 +4,4 @@ RUN pip3 install netmiko
 
 COPY so2ban.py /opt/so2ban/so2ban.py
 
-RUN python3 /opt/so2ban/so2ban.py --start
+CMD ["python3","/opt/so2ban/so2ban.py","--start"]
