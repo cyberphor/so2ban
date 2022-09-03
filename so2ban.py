@@ -1,4 +1,4 @@
-usr/bin/env python3
+#!/usr/bin/env python3
 
 import argparse
 import http.server
@@ -10,28 +10,76 @@ import shutil
 import ssl
 import subprocess
 
-class RequestHandler(http.server.BaseHTTPRequestHandler):
-    def block(self, acl_name, adversary):
-        commands = [acl, (ace + adversary)]
-        with netmiko.ConnectHandler(**router) as net_connect:
-            net_connect.send_config_set(commands)
-        message = "Blocking " + adversary + "\n"
-        self.wfile.write(message.encode("UTF-8"))
+class BoundaryDevice():
+    def __init__(self):
+        self.settings = {
+            "device_type": "",
+            "host": "",
+            "username": "",
+            "password": "",
+        }
+        self.acl = ""
+        self.configure_acl_command_prefix = ""
+        self.block_command_prefix = ""
+        self.unblock_command_prefix = ""
+    def block_host(self, host):
+        commands = [
+            " ".join(self.configure_acl_command_prefix, self.acl), 
+            " ".join(self.block_command_prefix, host)
+        ]
+        with netmiko.ConnectHandler(**self.settings) as connection:
+            connection.send_config_set(commands)
+            message = "Blocking " + host + "\n"
+        return message
+    def unblock_host(self, host):
+        commands = [
+            " ".join(self.configure_acl_command_prefix, self.acl),
+            " ".join(self.unblock_command_prefix, host)
+        ]
+        with netmiko.ConnectHandler(**self.settings) as connection:
+            connection.send_config_set(commands)
+            message = "Unblocking " + host + "\n"
+        return message
+
+class RequestHandler(http.server.BaseHTTPRequestHandler, BoundaryDevice):
     def do_GET(self):
         self.send_error(405)
     def do_POST(self):
         if self.path.startswith("/block/"):
-            adversary = self.path.split("/block/")[1]
+            host = self.path.split("/block/")[1]
             try:
-                ipaddress.ip_address(adversary)
+                ipaddress.ip_address(host)
                 self.send_response(200)
                 self.send_header("Content-Type", "text/html")
                 self.end_headers()
-                self.block(acl_name, adversary)
+                message = BoundaryDevice.block_host(host)
+                self.wfile.write(message.encode("UTF-8"))
+            except ValueError:
+                self.send_error(400)
+        elif self.path.startswith("/unblock/"):
+            host = self.path.split("/unblock/")[1]
+            try:
+                ipaddress.ip_address(host)
+                self.send_response(200)
+                self.send_header("Content-Type", "text/html")
+                self.end_headers()
+                message = BoundaryDevice.unblock_host(host)
+                self.wfile.write(message.encode("UTF-8"))
             except ValueError:
                 self.send_error(400)
         else:
             self.send_error(404)
+
+device = BoundaryDevice()
+device.settings["device_type"] = "cisco_ios"
+device.settings["host"] = "192.168.1.1"
+device.settings["username"] = "admin"
+device.settings["password"] = "password"
+device.acl_name = "BLOCK_ADVERSARY"
+device.acl_command_prefix = "ip access-list standard"
+device.ace_command_prefix = "1 deny"    
+ip = "127.0.0.1"
+port = 8666
 
 def create_certificate():
     print("Creating a self-signed certificate...")
@@ -53,9 +101,9 @@ def create_certificate():
         "-subj",
         ("/C=%s/ST=%s/L=%s/O=%s/OU=%s/CN=%s" % fields),
         "-keyout",
-        certfile_name,
+        "so2ban.pem",
         "-out",
-        certfile_name
+        "so2ban.pem"
     ]
     subprocess.run(openssl, stdout = subprocess.PIPE, check = True)
     print("Done!")
@@ -64,13 +112,13 @@ def create_certificate():
 def update_action_menu():
     default_action_menu = "/opt/so/saltstack/default/salt/soc/files/soc/menu.actions.json"
     local_action_menu = "/opt/so/saltstack/local/salt/soc/files/soc/menu.actions.json"
-    so2ban_api = "https://%s:%s/block/{value}" % (ip, port)
+    link = "https://%s:%s/block/{value}" % (ip, port)
     so2ban = {
         "name": "Block",
         "description": "Block at network perimeter",
         "icon": "fas fa-shield-alt",
         "target": "_blank",
-        "links": [ so2ban_api ],
+        "links": [ link ],
         "background": True,
         "method": "POST"
     }
@@ -96,85 +144,36 @@ def update_action_menu():
     print("Done!")
     return
 
-def restart_soc():
+def restart_security_onion_console():
     print("Restarting the Security Onion Console...")
     subprocess.run("so-soc-restart", stdout = subprocess.PIPE, check = True)
     print("Done!")
     return
 
-def add_firewall_exemption():
-    iptables = ["iptables","-I","INPUT","1","-p","tcp","--dport","8666","-j","ACCEPT"]
-    print("Adding firewall exemption to iptables...")
-    subprocess.run(iptables, stdout = subprocess.PIPE, check = True)
-    print("Done!")
-    return
-
-def start_so2ban():
+def start_listening_api(ip, port):
+    address = (ip, port)
     handler = RequestHandler
-    server = http.server.HTTPServer(server_address, handler)
-    server.socket = ssl.wrap_socket(
-        server.socket,
+    api = http.server.HTTPServer(address, handler)
+    api.socket = ssl.wrap_socket(
+        api.socket,
         server_side = True,
-        certfile = certfile_name,
+        certfile = "so2ban.pem",
         ssl_version = ssl.PROTOCOL_TLS
     )
-    server.serve_forever()
-    return
-
-def show_acl(acl_name):
-    with netmiko.ConnectHandler(**router) as connection:
-        command = "show run | section ip access-list standard " + acl_name
-        acl = connection.send_command(command)
-        print(acl)
-    return
-
-def unblock_host(acl_name, host):
-    with netmiko.ConnectHandler(**router) as connection:
-        commands = [
-            ("ip access-list standard " + acl_name),
-            ("no deny " + host)
-        ]
-        connection.send_config_set(commands)
+    api.serve_forever()
     return
 
 def main():
-    ip = "192.168.1.69"
-    port = 8666
-    server_address = (ip, port)
-    certfile_name = "so2ban.pem"
-    device = {
-        "device_type": "",
-        "host": "",
-        "username": "",
-        "password": "",
-    }
-    device["device_type"] = "cisco_ios"
-    device["host"] = "192.168.1.1"
-    device["username"] = "admin"
-    device["password"] = "password"
-    acl_name = "BLOCK_ADVERSARY"
-    acl = "ip access-list standard " + acl_name
-    ace = "1 deny "
     parser = argparse.ArgumentParser()
     parser.add_argument("--install", action = "store_true", help = "Install so2ban")
     parser.add_argument("--start", action = "store_true", help = "Start so2ban")
-    parser.add_argument("--show-acl", action = "store_true", help = "Show access control list")
-    parser.add_argument("--device-type", choices = ["cisco_ios", "paloalto_panos"], help = "Network device type")
-    parser.add_argument("--device-host", help = "Network device host (e.g., IP, hostname)")
-    parser.add_argument("--device-username", help = "Network device username")
-    parser.add_argument("--device-password", help = "Network device password")
     args = parser.parse_args()
     if args.install:
         create_certificate()
         update_action_menu()
-        restart_soc()
-        add_firewall_exemption()
+        restart_security_onion_console()
     elif args.start:
-        start_so2ban()
-    elif args.show_acl:
-        show_acl()
-    elif args.unblock_host:
-        unblock_host()
+        start_listening_api()
     else:
         parser.print_help()
     return
