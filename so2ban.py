@@ -146,8 +146,8 @@ def start_listening_api():
     device.acl_name = "BLOCK_ADVERSARY"
     device.acl_command_prefix = "ip access-list standard"
     device.ace_command_prefix = "1 deny"
-    handler = RequestHandler(device)
-    api = http.server.HTTPServer(address, handler)
+    handler = RequestHandler
+    api = http.server.HTTPServer(address, handler())
     api.socket = ssl.wrap_socket(
         api.socket,
         server_side = True,
@@ -163,10 +163,10 @@ def main():
     parser.add_argument("--start", action = "store_true", help = "Start so2ban")
     args = parser.parse_args()
     if args.install:
-        generate_self_signed_certificate()
         update_action_menu()
         restart_security_onion_console()
     elif args.start:
+        generate_self_signed_certificate()
         start_listening_api()
     else:
         parser.print_help()
