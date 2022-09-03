@@ -10,10 +10,6 @@ import shutil
 import ssl
 import subprocess
 
-so2ban_ip = "127.0.0.1"
-so2ban_port = 8666
-so2ban_certificate = "so2ban.pem"
-
 class BoundaryDevice():
     def __init__(self):
         self.settings = {
@@ -158,6 +154,9 @@ def restart_security_onion_console():
     return
 
 def main():
+    so2ban_ip = "127.0.0.1"
+    so2ban_port = 8666
+    so2ban_certificate_name = "so2ban.pem"
     parser = argparse.ArgumentParser()
     parser.add_argument("--update-soc", action = "store_true", help = "Add so2ban to the Security Onion Console (SOC)")
     parser.add_argument("--start", action = "store_true", help = "Start so2ban")

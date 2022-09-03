@@ -7,25 +7,19 @@ Blocks IP addresses via the Security Onion Console.
 git clone https://github.com/cyberphor/so2ban.git
 ```
 
-**Step 2.** Use `pip3` to download all `so2ban` dependencies using an Internet-accessible computer.
+**Step 2.** 
 ```
-pip3 download -r so2ban/requirements.txt -d so2ban --no-binary :all: --no-cache-dir
+docker build -t so2ban so2ban
 ```
 
-**Step 3.** Upload the entire `so2ban` directory from your Internet-accessible computer to your Security Onion Manager Node using either a CD, USB drive, or SCP. 
+**Step 3.** Upload `so2ban` from your Internet-accessible computer to your Security Onion Manager Node using either a CD, USB drive, or SCP. 
 ```
 scp -r so2ban victor@192.168.1.69:~
 ```
 
-**Step 4.** Login to your Security Onion Manager Node and install all `so2ban` dependencies. 
+**Step 4.** 
 ```
-pip3 install -r so2ban/requirements.txt --no-index --find-links so2ban/
-```
-
-**Step 5.** Run `so2ban.py` with the `--install` parameter.
-```
-cd so2ban
-sudo python3 so2ban.py --install
+docker run so2ban
 ```
 
 ### Screenshots
