@@ -4,7 +4,7 @@ Blocks IP addresses via the Security Onion Console.
 ### How to Install so2ban on an Air-Gapped Security Onion Manager Node
 **Step 1.** Download this GitHub repository using an Internet-accessible computer. 
 ```
-git clone https://github.com/cyberphor/so2ban.git
+git clone https://github.com/cyberphor/so2ban
 ```
 
 **Step 2.** 
@@ -19,7 +19,8 @@ scp -r so2ban victor@192.168.1.69:~
 
 **Step 4.** 
 ```
-docker run so2ban
+cd so2ban
+sudo docker-compose up
 ```
 
 ### Screenshots
