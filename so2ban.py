@@ -1,47 +1,48 @@
-#!/usr/bin/env python3
+sr/bin/env python3
 
 import argparse
 import http.server
 import ipaddress
 import json
-import netmiko
+#import netmiko
 import os
 import shutil
 import ssl
 import subprocess
 
-class BoundaryDevice():
-    def __init__(self):
-        self.settings = {
-            "device_type": "",
-            "host": "",
-            "username": "",
-            "password": "",
-        }
-        self.acl = ""
-        self.configure_acl_command_prefix = ""
-        self.block_command_prefix = ""
-        self.unblock_command_prefix = ""
-    def block_host(self, host):
-        commands = [
-            " ".join(self.configure_acl_command_prefix, self.acl), 
-            " ".join(self.block_command_prefix, host)
-        ]
-        with netmiko.ConnectHandler(**self.settings) as connection:
-            connection.send_config_set(commands)
-            message = "Blocking " + host + "\n"
-        return message
-    def unblock_host(self, host):
-        commands = [
-            " ".join(self.configure_acl_command_prefix, self.acl),
-            " ".join(self.unblock_command_prefix, host)
-        ]
-        with netmiko.ConnectHandler(**self.settings) as connection:
-            connection.send_config_set(commands)
-            message = "Unblocking " + host + "\n"
-        return message
-
-class RequestHandler(http.server.BaseHTTPRequestHandler, BoundaryDevice):
+class RequestHandler(object):
+    def __init__(self, address, http.server.BaseHTTPRequestHandler):
+        self.gatekeeper = self.Gateway()
+    class Gateway:
+        def __init__(self):
+            self.settings = {
+                "gatekeeper_type": "",
+                "host": "",
+                "username": "",
+                "password": "",
+            }
+            self.acl = ""
+            self.configure_acl_command_prefix = ""
+            self.block_command_prefix = ""
+            self.unblock_command_prefix = ""
+        def block_host(self, host):
+            commands = [
+                " ".join(self.configure_acl_command_prefix, self.acl), 
+                " ".join(self.block_command_prefix, host)
+            ]
+            #with netmiko.ConnectHandler(**self.settings) as connection:
+            #    connection.send_config_set(commands)
+            #    message = "Blocking " + host + "\n"
+            #return message
+        def unblock_host(self, host):
+            commands = [
+                " ".join(self.configure_acl_command_prefix, self.acl),
+                " ".join(self.unblock_command_prefix, host)
+            ]
+            #with netmiko.ConnectHandler(**self.settings) as connection:
+            #    connection.send_config_set(commands)
+            #    message = "Unblocking " + host + "\n"
+            #return message
     def do_GET(self):
         self.send_error(405)
     def do_POST(self):
@@ -52,7 +53,7 @@ class RequestHandler(http.server.BaseHTTPRequestHandler, BoundaryDevice):
                 self.send_response(200)
                 self.send_header("Content-Type", "text/html")
                 self.end_headers()
-                message = BoundaryDevice.block_host(host)
+                #message = self.gatekeeper.block_host(host)
                 self.wfile.write(message.encode("UTF-8"))
             except ValueError:
                 self.send_error(400)
@@ -63,66 +64,38 @@ class RequestHandler(http.server.BaseHTTPRequestHandler, BoundaryDevice):
                 self.send_response(200)
                 self.send_header("Content-Type", "text/html")
                 self.end_headers()
-                message = BoundaryDevice.unblock_host(host)
+                #message = self.gatekeeper.unblock_host(host)
                 self.wfile.write(message.encode("UTF-8"))
             except ValueError:
                 self.send_error(400)
         else:
             self.send_error(404)
 
-def generate_self_signed_certificate(so2ban_certificate_name):
-    print("Generating a self-signed certificate...")
-    country = "US" 
-    state = "New York"
-    locale = "New York City"
-    company = "Allsafe" 
-    section = "Cybersecurity"
-    common_name = os.uname()[1]
-    fields = country, state, locale, company, section, common_name
-    openssl = [
-        "openssl",
-        "req",
-        "-new",
-        "-x509",
-        "-days",
-        "365",
-        "-nodes",
-        "-subj",
-        ("/C=%s/ST=%s/L=%s/O=%s/OU=%s/CN=%s" % fields),
-        "-keyout",
-        so2ban_certificate_name,
-        "-out",
-        so2ban_certificate_name
-    ]
-    subprocess.run(openssl, stdout = subprocess.PIPE, check = True)
-    print("Done!")
-    return
-
-def start_listening_api(so2ban_ip, so2ban_port, so2ban_certificate_name):
-    address = (so2ban_ip, so2ban_port)
-    device = BoundaryDevice()
-    device.settings["device_type"] = "cisco_ios"
-    device.settings["host"] = "192.168.1.1"
-    device.settings["username"] = "admin"
-    device.settings["password"] = "password"
-    device.acl_name = "BLOCK_ADVERSARY"
-    device.acl_command_prefix = "ip access-list standard"
-    device.ace_command_prefix = "1 deny"
+def start_listening_api():
+    address = ("127.0.0.1", 8666)
     handler = RequestHandler
+    handler.gatekeeper.settings["device_type"] = "cisco_ios"
+    handler.gatekeeper.settings["host"] = "192.168.1.1"
+    handler.gatekeeper.settings["username"] = "admin"
+    handler.gatekeeper.settings["password"] = "password"
+    handler.gatekeeper.acl_name = "BLOCK_ADVERSARY"
+    handler.gatekeeper.acl_command_prefix = "ip access-list standard"
+    handler.gatekeeper.ace_command_prefix = "1 deny"
     api = http.server.HTTPServer(address, handler)
     api.socket = ssl.wrap_socket(
         api.socket,
         server_side = True,
-        certfile = so2ban_certificate_name,
+        keyfile = "private.key",
+        certfile = "public.key",
         ssl_version = ssl.PROTOCOL_TLS
     )
     api.serve_forever()
     return
 
-def update_action_menu(so2ban_ip, so2ban_port):
+def update_action_menu():
     default_action_menu = "/opt/so/saltstack/default/salt/soc/files/soc/menu.actions.json"
     local_action_menu = "/opt/so/saltstack/local/salt/soc/files/soc/menu.actions.json"
-    link = "https://%s:%s/block/{value}" % (so2ban_ip, so2ban_port)
+    link = "https://127.0.0.1:8666/block/{value}"
     action = {
         "name": "Block",
         "description": "Block at network perimeter",
@@ -154,19 +127,15 @@ def restart_security_onion_console():
     return
 
 def main():
-    so2ban_ip = "127.0.0.1"
-    so2ban_port = 8666
-    so2ban_certificate_name = "so2ban.pem"
     parser = argparse.ArgumentParser()
-    parser.add_argument("--update-soc", action = "store_true", help = "Add so2ban to the Security Onion Console (SOC)")
+    parser.add_argument("--update-soc", action = "store_true", help = "Add so2ban to the Security Onion Console (SOC) action menu")
     parser.add_argument("--start", action = "store_true", help = "Start so2ban")
     args = parser.parse_args()
     if args.update_soc:
-        update_action_menu(so2ban_ip, so2ban_port)
+        update_action_menu()
         restart_security_onion_console()
     elif args.start:
-        generate_self_signed_certificate(so2ban_certificate_name)
-        start_listening_api(so2ban_ip, so2ban_port, so2ban_certificate_name)
+        start_listening_api()
     else:
         parser.print_help()
     return
