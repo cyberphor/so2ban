@@ -49,7 +49,6 @@ def start_listening_api():
     address = ("127.0.0.1", 8666)
     handler = RequestHandler
     api = http.server.HTTPServer(address, handler)
-    """
     api.socket = ssl.wrap_socket(
         api.socket,
         server_side = True,
@@ -57,7 +56,6 @@ def start_listening_api():
         certfile = "public.key",
         ssl_version = ssl.PROTOCOL_TLS
     )
-    """
     api.serve_forever()
     return
 
