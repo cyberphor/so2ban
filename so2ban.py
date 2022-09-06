@@ -11,10 +11,10 @@ import subprocess
 
 class RequestHandler(http.server.BaseHTTPRequestHandler):
     settings = {
-        "device_type": "cisco_ios",
-        "host": "192.168.1.1",
-        "username": "admin",
-        "password": "password",
+        "device_type": "",
+        "host": "",
+        "username": "",
+        "password": "",
     }
     acl_name = "BLOCK_ADVERSARY"
     configure_acl_command_prefix = "ip access-list standard"
