@@ -4,9 +4,11 @@ services:
   so2ban:
     image: so2ban:latest
     build: .
-    hostname: so2ban
     ports:
-    - target: 8666
-      published: 8666
-      protocol: tcp
-      mode: host
+    - 8666:8666
+
+networks:
+  default:
+    driver: custom-driver-1
+    driver_opts:
+      com.docker.network.driver.mtu: 1500
