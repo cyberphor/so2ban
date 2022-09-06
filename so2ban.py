@@ -47,8 +47,8 @@ class RequestHandler(http.server.BaseHTTPRequestHandler):
         else:
             self.send_error(404)
 
-def start_listening_api():
-    address = ("172.17.0.2", 8666)
+def start_listening_api(ip):
+    address = (ip, 8666)
     handler = RequestHandler
     context = ssl.SSLContext(ssl.PROTOCOL_TLS_SERVER)
     context.load_cert_chain(certfile = "public.key", keyfile = "private.key")
@@ -57,10 +57,10 @@ def start_listening_api():
     api.serve_forever()
     return
 
-def update_action_menu():
+def update_action_menu(ip):
     default_action_menu = "/opt/so/saltstack/default/salt/soc/files/soc/menu.actions.json"
     local_action_menu = "/opt/so/saltstack/local/salt/soc/files/soc/menu.actions.json"
-    link = "https://127.0.0.1:8666/block/{value}"
+    link = "https://%s:8666/block/{value}" % (ip)
     action = {
         "name": "Block",
         "description": "Block at network perimeter",
@@ -95,12 +95,13 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--update-soc", action = "store_true", help = "Add so2ban to the Security Onion Console (SOC) action menu")
     parser.add_argument("--start", action = "store_true", help = "Start so2ban")
+    parser.add_argument("--ip-address", action = "store_true", help = "IP address for so2ban API to listen on")
     args = parser.parse_args()
     if args.update_soc:
-        update_action_menu()
+        update_action_menu(args.ip_address)
         restart_security_onion_console()
     elif args.start:
-        start_listening_api()
+        start_listening_api(args.ip_address)
     else:
         parser.print_help()
     return
