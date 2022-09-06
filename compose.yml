@@ -6,4 +6,7 @@ services:
     build: .
     hostname: so2ban
     ports:
-    - "8666:8666"
+    - target: 8666
+      published: 8666
+      protocol: tcp
+      mode: host
