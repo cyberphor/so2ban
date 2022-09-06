@@ -4,11 +4,6 @@ services:
   so2ban:
     image: so2ban:latest
     build: .
+    network_mode: bridge
     ports:
     - 8666:8666
-
-networks:
-  default:
-    driver: custom-driver-1
-    driver_opts:
-      com.docker.network.driver.mtu: 1500
