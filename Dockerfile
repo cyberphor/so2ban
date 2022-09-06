@@ -1,12 +1,21 @@
-FROM ghcr.io/security-onion-solutions/python:3-slim
+FROM alpine:latest
 
-RUN pip3 install netmiko
+LABEL Author="Victor Fernandez III, @cyberphor"
 
-RUN mkdir /opt/so2ban/
+RUN apk add --no-cache \
+    python3 \
+    py3-pip \
+    openssl
+
+RUN python3 -m pip install netmiko && \
+    mkdir /opt/so2ban/
 
 WORKDIR /opt/so2ban/
-
-RUN openssl req -new -x509 -days 365 -nodes -subj /CN="so2ban" -keyout "private.key" -out "public.key"
+ 
+RUN openssl req -new -x509 -days 365 -nodes -subj \
+    /CN="so2ban" \
+    -keyout "private.key" \
+    -out "public.key"
 
 COPY so2ban.py so2ban.py 
 

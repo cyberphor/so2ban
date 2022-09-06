@@ -24,9 +24,11 @@ class RequestHandler(http.server.BaseHTTPRequestHandler):
             (self.configure_acl_command_prefix + " " + self.acl_name), 
             (self.block_command_prefix + " " + host)
         ]
+        """
         with netmiko.ConnectHandler(**self.settings) as connection:
             connection.send_config_set(commands)
             message = "Blocking " + host + "\n"
+        """
         return "Blocking " + host + "\n"
     def do_GET(self):
         self.send_error(405)
@@ -48,14 +50,10 @@ class RequestHandler(http.server.BaseHTTPRequestHandler):
 def start_listening_api():
     address = ("127.0.0.1", 8666)
     handler = RequestHandler
+    context = ssl.SSLContext(ssl.PROTOCOL_TLS_SERVER)
+    context.load_cert_chain(certfile = "public.key", keyfile = "private.key")
     api = http.server.HTTPServer(address, handler)
-    api.socket = ssl.wrap_socket(
-        api.socket,
-        server_side = True,
-        keyfile = "private.key",
-        certfile = "public.key",
-        ssl_version = ssl.PROTOCOL_TLS
-    )
+    api.socket = context.wrap_socket(api.socket, server_side = True)
     api.serve_forever()
     return
 

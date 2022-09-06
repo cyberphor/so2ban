@@ -4,5 +4,6 @@ services:
   so2ban:
     image: so2ban:latest
     build: .
+    hostname: so2ban
     ports:
     - "8666:8666"
