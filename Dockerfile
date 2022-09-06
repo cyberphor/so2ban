@@ -19,4 +19,4 @@ RUN openssl req -new -x509 -days 365 -nodes -subj \
 
 COPY so2ban.py so2ban.py 
 
-ENTRYPOINT ["python3","so2ban.py","--start"]
+ENTRYPOINT ["python3","so2ban.py","--start","--ip-address","172.17.0.69"]
