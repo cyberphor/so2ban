@@ -95,7 +95,7 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--update-soc", action = "store_true", help = "Add so2ban to the Security Onion Console (SOC) action menu")
     parser.add_argument("--start", action = "store_true", help = "Start so2ban")
-    parser.add_argument("--ip-address", action = "store_true", help = "IP address for so2ban API to listen on")
+    parser.add_argument("--ip-address", help = "IP address for so2ban API to listen on")
     args = parser.parse_args()
     if args.update_soc:
         update_action_menu(args.ip_address)
