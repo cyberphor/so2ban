@@ -10,26 +10,22 @@ import ssl
 import subprocess
 
 class RequestHandler(http.server.BaseHTTPRequestHandler):
-    settings = {
-        "device_type": "",
-        "host": "",
-        "username": "",
-        "password": "",
-    }
-    acl_name = "BLOCK_ADVERSARY"
-    configure_acl_command_prefix = "ip access-list standard"
-    block_command_prefix = "1 deny"
+    settings = {"device_type": None, "host": None, "username": None, "password": None}
+    acl_name = None
+    acl_command_prefix = None
+    block_command_prefix = None
     def block_host(self, host):
         commands = [
             (self.configure_acl_command_prefix + " " + self.acl_name), 
             (self.block_command_prefix + " " + host)
         ]
-        """
-        with netmiko.ConnectHandler(**self.settings) as connection:
-            connection.send_config_set(commands)
-            message = "Blocking " + host + "\n"
-        """
-        return "Blocking " + host + "\n"
+        if args.audit_only:
+            return "Blocking " + host + "\n"
+        else:
+            with netmiko.ConnectHandler(**self.settings) as connection:
+                connection.send_config_set(commands)
+                message = "Blocking " + host + "\n"
+            return "Blocking " + host + "\n" 
     def do_GET(self):
         self.send_error(405)
     def do_POST(self):
@@ -47,13 +43,16 @@ class RequestHandler(http.server.BaseHTTPRequestHandler):
         else:
             self.send_error(404)
 
-def start_listening_api(ip, device_type, host, username, password):
+def start_listening_api(ip, device_type, host, username, password, acl_name, acl_commmand_prefix, block_command_prefix):
     address = (ip, 8666)
     handler = RequestHandler
     handler.settings["device_type"] = device_type
     handler.settings["host"] = host
     handler.settings["username"] = username
     handler.settings["password"] = password
+    handler.acl_name = acl_name
+    handler.acl_command_prefix = acl_command_prefix
+    handller.block_command_prefix = block_command_prefix
     context = ssl.SSLContext(ssl.PROTOCOL_TLS_SERVER)
     context.load_cert_chain(certfile = "public.key", keyfile = "private.key")
     api = http.server.HTTPServer(address, handler)
@@ -100,16 +99,29 @@ def main():
     parser.add_argument("--update-soc", action = "store_true", help = "Add so2ban to the Security Onion Console (SOC) action menu")
     parser.add_argument("--start", action = "store_true", help = "Start so2ban")
     parser.add_argument("--ip-address", help = "IP address for so2ban API to listen on")
-    parser.add_argument("--device-type")
-    parser.add_argument("--host")
-    parser.add_argument("--username")
-    parser.add_argument("--password")
+    parser.add_argument("--device-type", help = "Network boundary device type (e.g., cisco_ios, paloalto_panos)")
+    parser.add_argument("--host", help = "Network boundary device hostname or IP address")
+    parser.add_argument("--username", help = "Network boundary device username")
+    parser.add_argument("--password", help = "Network bonudary device password")
+    parser.add_argument("--acl-name", help = "Network boundary Access Control List (ACL) (e.g., 'BLOCK_ADVERSARY'")
+    parser.add_argument("--acl-command-prefix", help = "Network boundary ACL command prefix (e.g., 'ip access-list standard')")
+    parser.add_argument("--block-command-prefix", help = "Network boundary block command prefix (e.g., '1 deny'")
+    parser.add_argument("--audit-only", action = "store_true", "Audit only, do not block (use for troubleshooting)")
     args = parser.parse_args()
     if args.update_soc:
         update_action_menu(args.ip_address)
         restart_security_onion_console()
     elif args.start:
-        start_listening_api(args.ip_address, args.device_type, args.host, args.username, args.password)
+        start_listening_api(
+            args.ip_address, 
+            args.device_type, 
+            args.host, 
+            args.username, 
+            args.password,
+            args.acl_name,
+            args.acl_command_prefix,
+            args.block_command_prefix
+        )
     else:
         parser.print_help()
     return
