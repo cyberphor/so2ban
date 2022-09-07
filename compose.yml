@@ -2,6 +2,7 @@ version: "3"
 
 services:
   so2ban:
+    image: so2ban:latest
     build: .
     network_mode: bridge
     ports:
