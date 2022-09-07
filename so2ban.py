@@ -14,12 +14,13 @@ class RequestHandler(http.server.BaseHTTPRequestHandler):
     acl_name = None
     acl_command_prefix = None
     block_command_prefix = None
+    audit_only = False
     def block_host(self, host):
         commands = [
             (self.acl_command_prefix + " " + self.acl_name), 
             (self.block_command_prefix + " " + host)
         ]
-        if args.audit_only:
+        if self.audit_only == True:
             return "Blocking " + host + "\n"
         else:
             with netmiko.ConnectHandler(**self.settings) as connection:
@@ -43,7 +44,7 @@ class RequestHandler(http.server.BaseHTTPRequestHandler):
         else:
             self.send_error(404)
 
-def start_listening_api(ip, device_type, host, username, password, acl_name, acl_command_prefix, block_command_prefix):
+def start_listening_api(ip, device_type, host, username, password, acl_name, acl_command_prefix, block_command_prefix, audit_only):
     address = (ip, 8666)
     handler = RequestHandler
     handler.settings["device_type"] = device_type
@@ -53,6 +54,7 @@ def start_listening_api(ip, device_type, host, username, password, acl_name, acl
     handler.acl_name = acl_name
     handler.acl_command_prefix = acl_command_prefix
     handler.block_command_prefix = block_command_prefix
+    handler.audit_only = audit_only
     context = ssl.SSLContext(ssl.PROTOCOL_TLS_SERVER)
     context.load_cert_chain(certfile = "public.key", keyfile = "private.key")
     api = http.server.HTTPServer(address, handler)
@@ -120,7 +122,8 @@ def main():
             args.password,
             args.acl_name,
             args.acl_command_prefix,
-            args.block_command_prefix
+            args.block_command_prefix,
+            args.audit_only
         )
     else:
         parser.print_help()
