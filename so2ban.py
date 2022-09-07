@@ -52,7 +52,7 @@ def start_listening_api(ip, device_type, host, username, password, acl_name, acl
     handler.settings["password"] = password
     handler.acl_name = acl_name
     handler.acl_command_prefix = acl_command_prefix
-    handller.block_command_prefix = block_command_prefix
+    handler.block_command_prefix = block_command_prefix
     context = ssl.SSLContext(ssl.PROTOCOL_TLS_SERVER)
     context.load_cert_chain(certfile = "public.key", keyfile = "private.key")
     api = http.server.HTTPServer(address, handler)
