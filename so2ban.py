@@ -16,7 +16,7 @@ class RequestHandler(http.server.BaseHTTPRequestHandler):
     block_command_prefix = None
     def block_host(self, host):
         commands = [
-            (self.configure_acl_command_prefix + " " + self.acl_name), 
+            (self.acl_command_prefix + " " + self.acl_name), 
             (self.block_command_prefix + " " + host)
         ]
         if args.audit_only:
@@ -43,7 +43,7 @@ class RequestHandler(http.server.BaseHTTPRequestHandler):
         else:
             self.send_error(404)
 
-def start_listening_api(ip, device_type, host, username, password, acl_name, acl_commmand_prefix, block_command_prefix):
+def start_listening_api(ip, device_type, host, username, password, acl_name, acl_command_prefix, block_command_prefix):
     address = (ip, 8666)
     handler = RequestHandler
     handler.settings["device_type"] = device_type
@@ -106,7 +106,7 @@ def main():
     parser.add_argument("--acl-name", help = "Network boundary Access Control List (ACL) (e.g., 'BLOCK_ADVERSARY'")
     parser.add_argument("--acl-command-prefix", help = "Network boundary ACL command prefix (e.g., 'ip access-list standard')")
     parser.add_argument("--block-command-prefix", help = "Network boundary block command prefix (e.g., '1 deny'")
-    parser.add_argument("--audit-only", action = "store_true", "Audit only, do not block (use for troubleshooting)")
+    parser.add_argument("--audit-only", action = "store_true", help = "Audit only, do not block (use for troubleshooting)")
     args = parser.parse_args()
     if args.update_soc:
         update_action_menu(args.ip_address)
